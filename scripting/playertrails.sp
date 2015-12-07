@@ -6,7 +6,7 @@
 #include <updater>
 
 ConVar g_hCvar_Trail_Enable = null,
-g_hCvar_Trail_AdminOnly = null,
+g_hCvar_Trail_VIPOnly = null,
 g_hCvar_Trail_Duration = null,
 g_hCvar_Trail_Fade_Duration = null,
 g_hCvar_Trail_Width = null,
@@ -18,7 +18,7 @@ g_fCvar_Trail_Width,
 g_fCvar_Trail_End_Width;
 
 bool g_bCvar_Trail_Enable,
-g_bCvar_Trail_AdminOnly,
+g_bCvar_Trail_VIPOnly,
 b_Trail[MAXPLAYERS+1] = { false, ... };
 
 int SpamCMD = 0,
@@ -49,7 +49,7 @@ public void OnPluginStart()
     CreateConVar( "sm_playertrails_version", PLUGIN_VERSION, PLUGIN_DESCRIPTION, FCVAR_PLUGIN | FCVAR_SPONLY | FCVAR_NOTIFY | FCVAR_DONTRECORD );
 
     g_hCvar_Trail_Enable = CreateConVar("sm_trail_enable", "1", "Enable or Disable all features of the plugin.", FCVAR_PLUGIN, true, 0.0, true, 1.0);
-    g_hCvar_Trail_AdminOnly = CreateConVar("sm_trail_adminonly", "0", "Enable trails only for Admins (VOTE Flag).", FCVAR_PLUGIN, true, 0.0, true, 1.0);
+    g_hCvar_Trail_VIPOnly = CreateConVar("sm_trail_viponly", "0", "Enable trails only for VIPs (RESERVATION Flag).", FCVAR_PLUGIN, true, 0.0, true, 1.0);
     g_hCvar_Trail_Duration = CreateConVar("sm_trail_duration", "5.0", "Duration of the trail.", FCVAR_PLUGIN, true, 1.0, true, 100.0);
     g_hCvar_Trail_Fade_Duration = CreateConVar("sm_trail_fade_duration", "3", "Duration of the trail.", FCVAR_PLUGIN, true, 1.0, true, 100.0);
     g_hCvar_Trail_Width = CreateConVar("sm_trail_width", "5.0", "Width of the trail.", FCVAR_PLUGIN, true, 1.0, true, 100.0);
@@ -57,7 +57,7 @@ public void OnPluginStart()
     g_hCvar_Trail_Per_Round = CreateConVar("sm_trail_per_round", "5", "How many times per round a client can use the command.", FCVAR_PLUGIN, true, 1.0, true, 100.0);
 
     HookConVarChange(g_hCvar_Trail_Enable, OnSettingsChange);
-    HookConVarChange(g_hCvar_Trail_AdminOnly, OnSettingsChange);
+    HookConVarChange(g_hCvar_Trail_VIPOnly, OnSettingsChange);
     HookConVarChange(g_hCvar_Trail_Duration, OnSettingsChange);
     HookConVarChange(g_hCvar_Trail_Fade_Duration, OnSettingsChange);
     HookConVarChange(g_hCvar_Trail_Width, OnSettingsChange);
@@ -115,9 +115,9 @@ public Action Event_OnPlayerSpawn(Event event, const char[] name, bool dontBroad
     int client = GetClientOfUserId(GetEventInt(event, "userid"));
     if (g_bCvar_Trail_Enable && b_Trail[client] && IsValidClient(client))
     {
-        if (g_bCvar_Trail_AdminOnly)
+        if (g_bCvar_Trail_VIPOnly)
         {
-            if (!(GetUserFlagBits(client) & ADMFLAG_VOTE) || !(GetUserFlagBits(client) & ADMFLAG_ROOT))
+            if (!(GetUserFlagBits(client) & ADMFLAG_RESERVATION) || !(GetUserFlagBits(client) & ADMFLAG_RESERVATION))
             {
                 return Plugin_Handled;
             }
@@ -139,11 +139,11 @@ public Action Command_Trail(int client, int args)
         return Plugin_Handled;
     }
 
-    if (g_bCvar_Trail_AdminOnly)
+    if (g_bCvar_Trail_VIPOnly)
     {
-        if (!(GetUserFlagBits(client) & ADMFLAG_VOTE) || !(GetUserFlagBits(client) & ADMFLAG_ROOT))
+        if (!(GetUserFlagBits(client) & ADMFLAG_RESERVATION) || !(GetUserFlagBits(client) & ADMFLAG_RESERVATION))
         {
-            CPrintToChat(client, "[\x07T\x0FR\x10A\x04I\x0CL\x0ES\x01] {red}ERROR{default}: Only admins may use this command.");
+            CPrintToChat(client, "[\x07T\x0FR\x10A\x04I\x0CL\x0ES\x01] {red}ERROR{default}: Only VIPs may use this command.");
             return Plugin_Handled;
         }
     }
@@ -291,8 +291,8 @@ public OnSettingsChange(ConVar convar, const char[] oldValue, const char[] newVa
 {
     if(convar == g_hCvar_Trail_Enable)
         g_bCvar_Trail_Enable = StringToInt(newValue) ? true : false;
-    else if(convar == g_hCvar_Trail_AdminOnly)
-        g_bCvar_Trail_AdminOnly = StringToInt(newValue) ? true : false;
+    else if(convar == g_hCvar_Trail_VIPOnly)
+        g_bCvar_Trail_VIPOnly = StringToInt(newValue) ? true : false;
     else if(convar == g_hCvar_Trail_Duration)
         g_fCvar_Trail_Duration = StringToFloat(newValue);
     else if(convar == g_hCvar_Trail_Fade_Duration)
@@ -316,7 +316,7 @@ stock bool IsValidClient(int client)
 UpdateConVars()
 {
     g_bCvar_Trail_Enable = GetConVarBool(g_hCvar_Trail_Enable);
-    g_bCvar_Trail_AdminOnly = GetConVarBool(g_hCvar_Trail_AdminOnly);
+    g_bCvar_Trail_VIPOnly = GetConVarBool(g_hCvar_Trail_VIPOnly);
     g_fCvar_Trail_Duration = GetConVarFloat(g_hCvar_Trail_Duration);
     g_iCvar_Trail_Fade_Duration = GetConVarInt(g_hCvar_Trail_Fade_Duration);
     g_fCvar_Trail_Width = GetConVarFloat(g_hCvar_Trail_Width);
